@@ -5,28 +5,39 @@ import Map from "./components/Map";
 function App() {
   const [players, setPlayers] = useState({});
   const [name, setName] = useState("");
-  const [role, setRole] = useState("player");
   const [npcs, setNpcs] = useState({});
+  const [dialog, setDialog] = useState(null);
+  const [user, setUser] = useState(null);
+  const [masterText, setMasterText] = useState(null); // texto selecionado pelo mestre
 
+  // recebe players do servidor
   useEffect(() => {
     socket.on("updatePlayers", (data) => {
       setPlayers(data);
     });
 
-    return () => {
-      socket.off("updatePlayers");
-    };
+    return () => socket.off("updatePlayers");
   }, []);
-  
-  // estados
-  const setMode = (mode) => {
-    socket.emit("setMode", mode);
-  };
 
-  const handleLogin = () => {
-    socket.emit("login", { username: name, password: "123" });
-  };
+  // recebe NPCs do servidor
+  useEffect(() => {
+    socket.on("updateNPCs", (data) => {
+      setNpcs(data);
+    });
 
+    return () => socket.off("updateNPCs");
+  }, []);
+
+  // escuta eventos de diálogo do servidor
+  useEffect(() => {
+    socket.on("dialog", (data) => {
+      setDialog(data.text);
+    });
+
+    return () => socket.off("dialog");
+  }, []);
+
+  // login
   useEffect(() => {
     socket.on("loginSuccess", (data) => {
       setUser(data);
@@ -36,53 +47,53 @@ function App() {
       alert(msg);
     });
   }, []);
+  // debug login
+  useEffect(() => {
+    socket.on("loginSuccess", (data) => {
+      console.log("LOGIN OK", data);
+      setUser(data);
+    });
 
+    socket.on("loginError", (msg) => {
+      console.log("LOGIN ERRO", msg);
+      alert(msg);
+    });
+  }, []);
+
+  // envia login
+  const handleLogin = () => {
+    socket.emit("login", { username: name, password: "123" });
+  };
+
+  // movimentação (bloqueia mestre)
   const move = (dir) => {
+    if (user?.role === "mestre") return;
+
     socket.emit("move", dir);
   };
 
-  const spawnNPC = () => {
-    socket.emit("spawnNPC", { x: 2, y: 2 });
+  // interação com mapa
+  const handleTileClick = (x, y) => {
+    socket.emit("interact", { x, y });
   };
 
-  const moveNPC = (dir) => {
-    const npcId = Object.keys(npcs)[0];
-    if (!npcId) return;
+  // textos narrativos para o mestre usar durante a sessão
+  const masterTexts = {
+    papaiNoel: [
+      "Ho ho ho... vocês foram bons este ano?",
+      "Eu trouxe presentes... mas não são o que esperavam."
+    ],
+    eventos: [
+      "As luzes piscam violentamente.",
+      "Um sino ecoa pela noite."
+    ],
+    climax: [
+      "O corpo cai... mas o sorriso permanece.",
+      "O Natal acabou. Para sempre."
+    ]
+  };  
 
-    socket.emit("moveNPC", { id: npcId, dir });
-  };
-  const [user, setUser] = useState(null);
-
-  {role === "mestre" && (
-    <div style={{ marginTop: 20 }}>
-      <button onClick={() => setMode("livre")}>Modo Livre</button>
-      <button onClick={() => setMode("turno")}>Modo Turno</button>
-      <button onClick={() => setMode("stop")}>STOP</button>
-    </div>
-  )}
-  {role === "mestre" && (
-    <div>
-      <button onClick={spawnNPC}>Spawn NPC</button>
-
-      <div>
-        <button onClick={() => moveNPC("up")}>↑ NPC</button>
-        <button onClick={() => moveNPC("down")}>↓ NPC</button>
-        <button onClick={() => moveNPC("left")}>← NPC</button>
-        <button onClick={() => moveNPC("right")}>→ NPC</button>
-      </div>
-    </div>
-  )}  
-
-  useEffect(() => {
-    socket.on("updateNPCs", (data) => {
-      setNpcs(data);
-    });
-
-    return () => {
-      socket.off("updateNPCs");
-    };
-  }, []);    
-
+  // ===== TELA DE LOGIN =====
   if (!user) {
     return (
       <div>
@@ -97,6 +108,7 @@ function App() {
     );
   }
 
+  // ===== TELA DO MESTRE =====
   if (user.role === "mestre") {
     return (
       <div>
@@ -110,16 +122,48 @@ function App() {
           Spawn NPC
         </button>
 
-        <Map players={players} npcs={npcs} />
+        <Map players={players} npcs={npcs} onTileClick={handleTileClick} />
+
+        // painel de textos narrativos do mestre
+        <div style={{ marginTop: 20 }}>
+          <h3>📖 Textos do Mestre</h3>
+
+          <button onClick={() => setMasterText(masterTexts.papaiNoel[0])}>
+            Papai Noel 1
+          </button>
+
+          <button onClick={() => setMasterText(masterTexts.eventos[0])}>
+            Evento 1
+          </button>
+
+          <button onClick={() => setMasterText(masterTexts.climax[0])}>
+            Clímax 1
+          </button>
+        </div>
+
+        {/* exibe texto selecionado */}
+        {masterText && (
+          <div
+            style={{
+              marginTop: 20,
+              padding: 10,
+              background: "#200",
+              color: "#fff"
+            }}
+          >
+            {masterText}
+          </div>
+        )}
       </div>
     );
   }
 
+  // ===== TELA DO PLAYER =====
   return (
     <div>
       <h1>Player: {user.character}</h1>
 
-      <Map players={players} npcs={npcs} />
+      <Map players={players} npcs={npcs} onTileClick={handleTileClick} />
 
       <div>
         <button onClick={() => move("up")}>↑</button>
@@ -127,6 +171,20 @@ function App() {
         <button onClick={() => move("left")}>←</button>
         <button onClick={() => move("right")}>→</button>
       </div>
+
+      {/* exibe diálogo na tela */}
+      {dialog && (
+        <div
+          style={{
+            marginTop: 20,
+            padding: 10,
+            background: "#111",
+            color: "#0f0"
+          }}
+        >
+          {dialog}
+        </div>
+      )}
     </div>
   );
 }

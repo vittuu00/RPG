@@ -7,15 +7,23 @@ const grass =
 const playerSprite =
   "https://cdn-icons-png.flaticon.com/512/194/194938.png";
 
-function Map({ players, npcs }) {
+// renderiza o mapa em grid e permite interação por clique
+function Map({ players, npcs, onTileClick }) {
   return (
     <div>
+      {/* percorre linhas (eixo Y) */}
       {Array.from({ length: GRID_SIZE }).map((_, y) => (
         <div key={y} style={{ display: "flex" }}>
+          
+          {/* percorre colunas (eixo X) */}
           {Array.from({ length: GRID_SIZE }).map((_, x) => {
+
+            // verifica se existe player na posição
             const playerHere = Object.values(players).find(
               (p) => p.x === x && p.y === y
             );
+
+            // verifica se existe npc na posição
             const npcHere = Object.values(npcs || {}).find(
               (n) => n.x === x && n.y === y
             );
@@ -23,13 +31,16 @@ function Map({ players, npcs }) {
             return (
               <div
                 key={x}
+                // clique no tile para interação com mapa
+                onClick={() => onTileClick(x, y)}
                 style={{
                   width: TILE_SIZE,
                   height: TILE_SIZE,
-                  position: "relative"
+                  position: "relative",
+                  cursor: "pointer"
                 }}
               >
-                {/* CHÃO */}
+                {/* CHÃO (base do tile) */}
                 <img
                   src={grass}
                   alt="tile"
@@ -40,7 +51,7 @@ function Map({ players, npcs }) {
                   }}
                 />
 
-                {/* PLAYER */}
+                {/* PLAYER (desenhado por cima do chão) */}
                 {playerHere && (
                   <img
                     src={playerSprite}
@@ -55,7 +66,8 @@ function Map({ players, npcs }) {
                     }}
                   />
                 )}
-                {/* NPC */}
+
+                {/* NPC (desenhado por cima também) */}
                 {npcHere && (
                   <img
                     src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png"
