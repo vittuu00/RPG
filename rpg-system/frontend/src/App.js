@@ -161,16 +161,58 @@ function App() {
   // ===== TELA DO PLAYER =====
   return (
     <div>
-      <h1>Player: {user.character}</h1>
+      <h1>Player: {user.character?.name}</h1>
 
       <Map players={players} npcs={npcs} onTileClick={handleTileClick} />
 
-      <div>
-        <button onClick={() => move("up")}>↑</button>
-        <button onClick={() => move("down")}>↓</button>
-        <button onClick={() => move("left")}>←</button>
-        <button onClick={() => move("right")}>→</button>
-      </div>
+      {/* exibe ficha do personagem */}
+      {/* ficha do personagem em formato hexagonal */}
+      {user.character && (
+        <div
+          style={{
+            position: "fixed",
+            right: 20,
+            top: 80,
+            width: 260,
+            height: 300,
+            background: "#222",
+            color: "#fff",
+            padding: 20,
+            clipPath:
+              "polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            textAlign: "center"
+          }}
+        >
+          <h3>{user.character.name}</h3>
+
+          {/* atributos */}
+          <div style={{ fontSize: 12 }}>
+            <p>FOR: {user.character.attributes?.strength}</p>
+            <p>AGI: {user.character.attributes?.agility}</p>
+            <p>INT: {user.character.attributes?.intellect}</p>
+            <p>VIG: {user.character.attributes?.vigor}</p>
+            <p>PRE: {user.character.attributes?.presence}</p>
+          </div>
+
+          {/* status */}
+          <div style={{ marginTop: 10, fontSize: 12 }}>
+            <p>HP: {user.character.stats?.hp}</p>
+            <p>SAN: {user.character.stats?.sanity}</p>
+            <p>EN: {user.character.stats?.energy}</p>
+          </div>
+        </div>
+      )}
+
+        <div>
+          <button onClick={() => move("up")}>↑</button>
+          <button onClick={() => move("down")}>↓</button>
+          <button onClick={() => move("left")}>←</button>
+          <button onClick={() => move("right")}>→</button>
+        </div>
 
       {/* exibe diálogo na tela */}
       {dialog && (

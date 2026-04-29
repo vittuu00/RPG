@@ -20,10 +20,100 @@ const io = new Server(server, {
 // 👤 USUÁRIOS (fake por enquanto)
 // ==============================
 
+// estrutura mais organizada de usuários e personagens (objetos)
 const users = {
-  mestre: { password: "123", role: "mestre" },
-  player1: { password: "123", role: "detetive", character: "detetive" },
-  player2: { password: "123", role: "medico", character: "medico" }
+  mestre: {
+    password: "123",
+    role: "mestre"
+  },
+
+  detetive: {
+    password: "123",
+    role: "player",
+    // ficha base do personagem (inspirada em ordem paranormal)
+    character: {
+      name: "Detetive",
+
+      // atributos principais
+      attributes: {
+        strength: 2,     // FOR
+        agility: 3,      // AGI
+        intellect: 4,    // INT
+        vigor: 2,        // VIG
+        presence: 2      // PRE
+      },
+
+      // status
+      stats: {
+        hp: 100,         // vida
+        sanity: 100,     // sanidade
+        maxSanity: 100,
+        energy: 50       // esforço (PE)
+      },
+
+      // perícias
+      skills: {
+        investigation: 5,
+        perception: 4,
+        reflexes: 3,
+        fighting: 2,
+        will: 3
+      },
+
+      // inventário
+      inventory: [],
+
+      // habilidades especiais
+      abilities: [],
+
+      // info extra
+      description: "Especialista em investigação"
+    }
+  },
+
+  medico: {
+    password: "123",
+    role: "player",
+    // ficha base do personagem (inspirada em ordem paranormal)
+    character: {
+      name: "Médico",
+
+      // atributos principais
+      attributes: {
+        strength: 2,     // FOR
+        agility: 3,      // AGI
+        intellect: 4,    // INT
+        vigor: 2,        // VIG
+        presence: 2      // PRE
+      },
+
+      // status
+      stats: {
+        hp: 100,         // vida
+        sanity: 100,     // sanidade
+        maxSanity: 100,
+        energy: 50       // esforço (PE)
+      },
+
+      // perícias
+      skills: {
+        investigation: 5,
+        perception: 4,
+        reflexes: 3,
+        fighting: 2,
+        will: 3
+      },
+
+      // inventário
+      inventory: [],
+
+      // habilidades especiais
+      abilities: [],
+
+      // info extra
+      description: "Especialista em investigação"
+    }
+  }
 };
 
 // ==============================
@@ -52,46 +142,59 @@ io.on("connection", (socket) => {
   // ==========================
   // 🔐 LOGIN
   // ==========================
-  socket.on("login", ({ username, password }) => {
-    console.log("tentando login:", username);
+  // login do usuário
+socket.on("login", ({ username, password }) => {
+  const user = users[username];
 
-    const user = users[username];
+  if (!user || user.password !== password) {
+    socket.emit("loginError", "Login inválido");
+    return;
+  }
 
-    if (!user || user.password !== password) {
-      console.log("login inválido");
-      socket.emit("loginError", "Login inválido");
-      return;
-    }
-
-    console.log("login OK");
-
-    // cria player no estado
-    players[socket.id] = {
+  // se for mestre, NÃO adiciona ao mapa
+  if (user.role === "mestre") {
+    socket.emit("loginSuccess", {
       id: socket.id,
       username,
-      role: user.role,
-      character: user.character || null,
+      role: user.role
+    });
+    return;
+  }
+
+  // player normal entra no mapa
+  players[socket.id] = {
+    id: socket.id,
+    username,
+    role: user.role,
+
+    character: user.character
+      ? JSON.parse(JSON.stringify(user.character))
+      : null,
+
+    position: {
       x: 5,
       y: 5
-    };
+    }
+  };
 
-    socket.emit("loginSuccess", players[socket.id]);
-    io.emit("updatePlayers", players);
-  });
+  socket.emit("loginSuccess", players[socket.id]);
+  io.emit("updatePlayers", players);
+});
 
   // ==========================
   // 🧭 MOVIMENTO PLAYER
   // ==========================
+  // movimentação do player no mapa
   socket.on("move", (dir) => {
     const player = players[socket.id];
 
-    // bloqueios
     if (!player || gameMode === "stop") return;
 
-    if (dir === "up") player.y--;
-    if (dir === "down") player.y++;
-    if (dir === "left") player.x--;
-    if (dir === "right") player.x++;
+    // move usando a nova estrutura (position)
+    if (dir === "up") player.position.y--;
+    if (dir === "down") player.position.y++;
+    if (dir === "left") player.position.x--;
+    if (dir === "right") player.position.x++;
 
     io.emit("updatePlayers", players);
   });

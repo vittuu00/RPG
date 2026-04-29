@@ -18,10 +18,13 @@ function Map({ players, npcs, onTileClick }) {
           {/* percorre colunas (eixo X) */}
           {Array.from({ length: GRID_SIZE }).map((_, x) => {
 
-            // verifica se existe player na posição
-            const playerHere = Object.values(players).find(
-              (p) => p.x === x && p.y === y
-            );
+            // suporta player com position OU x/y (compatibilidade)
+            const playerHere = Object.values(players).find((p) => {
+              const px = p.position?.x ?? p.x;
+              const py = p.position?.y ?? p.y;
+
+              return px === x && py === y;
+            });
 
             // verifica se existe npc na posição
             const npcHere = Object.values(npcs || {}).find(
