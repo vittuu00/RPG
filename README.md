@@ -1,4 +1,4 @@
-# RPG System — Natal Macabro
+# RPG System 
 
 Sistema web para RPG de mesa com foco em suporte ao mestre, interação em mapa e ficha de personagem, inspirado em campanhas como Natal Macabro.
 
