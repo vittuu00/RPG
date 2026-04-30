@@ -9,6 +9,8 @@ function App() {
   const [dialog, setDialog] = useState(null);
   const [user, setUser] = useState(null);
   const [masterText, setMasterText] = useState(null); // texto selecionado pelo mestre
+  const [pendingRoll, setPendingRoll] = useState(null);
+  const [rollResults, setRollResults] = useState([]);
 
   // recebe players do servidor
   useEffect(() => {
@@ -26,6 +28,23 @@ function App() {
     });
 
     return () => socket.off("updateNPCs");
+  }, []);
+
+  useEffect(() => {
+    socket.on("rollRequested", (data) => {
+      console.log("ROLL RECEBIDO:", data);
+      setPendingRoll(data);
+    });
+
+    return () => socket.off("rollRequested");
+  }, []);
+
+  useEffect(() => {
+    socket.on("rollResult", (data) => {
+      setRollResults((prev) => [data, ...prev]);
+    });
+
+    return () => socket.off("rollResult");
   }, []);
 
   // escuta eventos de diálogo do servidor
@@ -76,6 +95,7 @@ function App() {
   const handleTileClick = (x, y) => {
     socket.emit("interact", { x, y });
   };
+  
 
   // textos narrativos para o mestre usar durante a sessão
   const masterTexts = {
@@ -123,6 +143,59 @@ function App() {
         </button>
 
         <Map players={players} npcs={npcs} onTileClick={handleTileClick} />
+        {/* log de rolagens */}
+        <div style={{ marginTop: 20 }}>
+          <h3>Rolagens</h3>
+
+          {rollResults.map((r, index) => (
+            <div
+              key={index}
+              style={{
+                background: "#111",
+                padding: 10,
+                marginBottom: 5,
+                color: "#fff"
+              }}
+            >
+              <strong>{r.player}</strong> rolou <strong>{r.action}</strong> <br />
+              🎲 Dado: {r.dice} | Atributo: {r.attr} | Perícia: {r.skill} <br />
+              👉 Total: <strong>{r.total}</strong>
+            </div>
+          ))}
+        </div>
+
+        {/* painel de rolagens */}
+        <div>
+          <h3>Solicitar Rolagem</h3>
+
+          {Object.entries(players).map(([id, p]) => (
+            p.role === "player" && (
+              <div key={id}>
+                <span>{p.character?.name}</span>
+
+                <button onClick={() => {
+                  console.log("clicou investigacao");
+
+                  socket.emit("requestRoll", {
+                    targetId: id,
+                    actionKey: "investigacao"
+                  });
+                }}>
+                  Investigação
+                </button>
+
+                <button onClick={() =>
+                  socket.emit("requestRoll", {
+                    targetId: id,
+                    actionKey: "percepcao"
+                  })
+                }>
+                  Percepção
+                </button>
+              </div>
+            )
+          ))}
+        </div>
 
         // painel de textos narrativos do mestre
         <div style={{ marginTop: 20 }}>
@@ -164,6 +237,36 @@ function App() {
       <h1>Player: {user.character?.name}</h1>
 
       <Map players={players} npcs={npcs} onTileClick={handleTileClick} />
+      {/* log de rolagens */}
+      <div style={{ marginTop: 20 }}>
+        <h3>Rolagens</h3>
+
+        {rollResults.map((r, index) => (
+          <div
+            key={index}
+            style={{
+              background: "#111",
+              padding: 10,
+              marginBottom: 5,
+              color: "#fff"
+            }}
+          >
+            <strong>{r.player}</strong> rolou <strong>{r.action}</strong>
+
+            <div>
+              🎲 Dados: {r.rolls.join(", ")}
+            </div>
+
+            <div>
+              Melhor: <strong>{r.bestDice}</strong> + Perícia ({r.skill})
+            </div>
+
+            <div>
+              👉 Total: <strong>{r.total}</strong>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* exibe ficha do personagem */}
       {/* ficha do personagem em formato hexagonal */}
@@ -204,6 +307,24 @@ function App() {
             <p>SAN: {user.character.stats?.sanity}</p>
             <p>EN: {user.character.stats?.energy}</p>
           </div>
+        </div>
+      )}
+
+      {/* pedido de rolagem */}
+      {pendingRoll && (
+        <div style={{ marginTop: 20, background: "#111", padding: 10 }}>
+          <p>Rolagem solicitada: {pendingRoll.action.label}</p>
+
+          <button
+            onClick={() => {
+              socket.emit("rollDice", {
+                actionKey: pendingRoll.actionKey
+              });
+              setPendingRoll(null);
+            }}
+          >
+            Rolar dado
+          </button>
         </div>
       )}
 

@@ -19,6 +19,8 @@ const io = new Server(server, {
 // ==============================
 // 👤 USUÁRIOS (fake por enquanto)
 // ==============================
+// sockets que são mestres
+const masters = new Set();
 
 // estrutura mais organizada de usuários e personagens (objetos)
 const users = {
@@ -116,6 +118,25 @@ const users = {
   }
 };
 
+// ações de rolagem configuráveis
+const rollActions = {
+  investigacao: {
+    label: "Investigação",
+    attribute: "intellect",
+    skill: "investigation"
+  },
+  percepcao: {
+    label: "Percepção",
+    attribute: "presence",
+    skill: "perception"
+  },
+  reflexo: {
+    label: "Reflexos",
+    attribute: "agility",
+    skill: "reflexes"
+  }
+};
+
 // ==============================
 // 🎮 ESTADO DO JOGO
 // ==============================
@@ -143,43 +164,62 @@ io.on("connection", (socket) => {
   // 🔐 LOGIN
   // ==========================
   // login do usuário
-socket.on("login", ({ username, password }) => {
-  const user = users[username];
+  socket.on("login", ({ username, password }) => {
+    const user = users[username];
 
-  if (!user || user.password !== password) {
-    socket.emit("loginError", "Login inválido");
-    return;
-  }
+    if (!user || user.password !== password) {
+      socket.emit("loginError", "Login inválido");
+      return;
+    }
 
-  // se for mestre, NÃO adiciona ao mapa
-  if (user.role === "mestre") {
-    socket.emit("loginSuccess", {
+    // se for mestre, NÃO adiciona ao mapa
+    if (user.role === "mestre") {
+      masters.add(socket.id);
+
+      socket.emit("loginSuccess", {
+        id: socket.id,
+        username,
+        role: user.role
+      });
+
+      return;
+    }
+
+    // player normal entra no mapa
+    players[socket.id] = {
       id: socket.id,
       username,
-      role: user.role
-    });
-    return;
-  }
+      role: user.role,
 
-  // player normal entra no mapa
-  players[socket.id] = {
-    id: socket.id,
-    username,
-    role: user.role,
+      character: user.character
+        ? JSON.parse(JSON.stringify(user.character))
+        : null,
 
-    character: user.character
-      ? JSON.parse(JSON.stringify(user.character))
-      : null,
+      position: {
+        x: 5,
+        y: 5
+      }
+    };
 
-    position: {
-      x: 5,
-      y: 5
+    socket.emit("loginSuccess", players[socket.id]);
+    io.emit("updatePlayers", players);
+  });
+
+  // mestre solicita rolagem para um player específico
+  socket.on("requestRoll", ({ targetId, actionKey }) => {
+    if (!masters.has(socket.id)) {
+      console.log("não é mestre");
+      return;
     }
-  };
 
-  socket.emit("loginSuccess", players[socket.id]);
-  io.emit("updatePlayers", players);
-});
+    const action = rollActions[actionKey];
+    if (!action) return;
+
+    io.to(targetId).emit("rollRequested", {
+      actionKey,
+      action
+    });
+  });
 
   // ==========================
   // 🧭 MOVIMENTO PLAYER
@@ -197,6 +237,38 @@ socket.on("login", ({ username, password }) => {
     if (dir === "right") player.position.x++;
 
     io.emit("updatePlayers", players);
+  });
+
+  // rolagem estilo ordem paranormal (vários dados)
+  socket.on("rollDice", ({ actionKey }) => {
+    const player = players[socket.id];
+    if (!player) return;
+
+    const action = rollActions[actionKey];
+    if (!action) return;
+
+    const attrValue = player.character.attributes[action.attribute] || 0;
+    const skill = player.character.skills[action.skill] || 0;
+
+    // rola vários d20 baseado no atributo
+    const rolls = [];
+    for (let i = 0; i < attrValue; i++) {
+      rolls.push(Math.floor(Math.random() * 20) + 1);
+    }
+
+    // pega o maior dado
+    const bestDice = Math.max(...rolls);
+
+    const total = bestDice + skill;
+
+    io.emit("rollResult", {
+      player: player.character.name,
+      action: action.label,
+      rolls,        // todos os dados
+      bestDice,     // melhor resultado
+      skill,
+      total
+    });
   });
 
   // ==========================
@@ -281,9 +353,9 @@ socket.on("login", ({ username, password }) => {
   // ❌ DESCONECTAR
   // ==========================
   socket.on("disconnect", () => {
-    console.log("❌ Usuário desconectado:", socket.id);
-
     delete players[socket.id];
+    masters.delete(socket.id);
+
     io.emit("updatePlayers", players);
   });
 });
