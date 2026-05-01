@@ -6,6 +6,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
+const fs = require("fs"); 
 
 const app = express();
 app.use(cors());
@@ -15,6 +16,79 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*" }
 });
+
+// mapa do jogo (estado global)
+const gameMap = {
+  width: 20,
+  height: 20,
+
+  tiles: {}, // "x,y": { type, blocked, discoveredBy: [] }
+};
+
+// chama uma vez quando o servidor inicia
+if (fs.existsSync("map.json")) {
+  Object.assign(gameMap, JSON.parse(fs.readFileSync("map.json")));
+} else {
+  initializeMap();
+}
+
+
+
+// inicializa o mapa
+function initializeMap() {
+  for (let y = 0; y < gameMap.height; y++) {
+    for (let x = 0; x < gameMap.width; x++) {
+      gameMap.tiles[`${x},${y}`] = {
+        type: "grass",
+        blocked: false,
+        discoveredBy: []
+      };
+    }
+  }
+}
+
+function updateVision(playerId) {
+  const player = players[playerId];
+  if (!player) return;
+
+  const { x, y } = player.position;
+  const range = player.vision.range;
+
+  for (let dy = -range; dy <= range; dy++) {
+    for (let dx = -range; dx <= range; dx++) {
+      const tx = x + dx;
+      const ty = y + dy;
+
+      const tile = gameMap.tiles[`${tx},${ty}`];
+      if (tile && !tile.discoveredBy.includes(playerId)) {
+        tile.discoveredBy.push(playerId);
+      }
+    }
+  }
+}
+
+function getVisibleMap(playerId) {
+  const visibleTiles = {};
+
+  for (const key in gameMap.tiles) {
+    const tile = gameMap.tiles[key];
+
+    if (tile.discoveredBy.includes(playerId)) {
+      visibleTiles[key] = tile;
+    }
+  }
+
+  return visibleTiles;
+}
+
+function changeSanity(playerId, amount) {
+  const player = players[playerId];
+  if (!player) return;
+
+  const stats = player.character.stats;
+
+  stats.sanity = Math.max(0, Math.min(stats.maxSanity, stats.sanity + amount));  
+}
 
 // ==============================
 // 👤 USUÁRIOS (fake por enquanto)
@@ -137,10 +211,6 @@ const rollActions = {
   }
 };
 
-// ==============================
-// 🎮 ESTADO DO JOGO
-// ==============================
-
 // players conectados
 let players = {};
 
@@ -198,11 +268,17 @@ io.on("connection", (socket) => {
       position: {
         x: 5,
         y: 5
-      }
-    };
+      },
 
+      vision: {
+        range: 3    
+      } 
+    }
+    
     socket.emit("loginSuccess", players[socket.id]);
     io.emit("updatePlayers", players);
+    updateVision(socket.id);
+    socket.emit("mapData", getVisibleMap(socket.id));
   });
 
   // mestre solicita rolagem para um player específico
@@ -221,22 +297,33 @@ io.on("connection", (socket) => {
     });
   });
 
-  // ==========================
-  // 🧭 MOVIMENTO PLAYER
-  // ==========================
-  // movimentação do player no mapa
+  
+  // movimentação do player no mapa + limites + visão
   socket.on("move", (dir) => {
     const player = players[socket.id];
 
     if (!player || gameMode === "stop") return;
 
-    // move usando a nova estrutura (position)
+    // move
     if (dir === "up") player.position.y--;
     if (dir === "down") player.position.y++;
     if (dir === "left") player.position.x--;
     if (dir === "right") player.position.x++;
 
+    // 🧱 limita dentro do mapa
+    player.position.x = Math.max(0, Math.min(gameMap.width - 1, player.position.x));
+    player.position.y = Math.max(0, Math.min(gameMap.height - 1, player.position.y));
+
+    // 👁️ atualiza visão DEPOIS da posição final
+    updateVision(socket.id);
+
+    // 🗺️ envia mapa visível
+    socket.emit("mapData", getVisibleMap(socket.id));
+
+    // 🌐 sincroniza players
     io.emit("updatePlayers", players);
+
+    fs.writeFileSync("map.json", JSON.stringify(gameMap));
   });
 
   // rolagem estilo ordem paranormal (vários dados)
@@ -262,10 +349,11 @@ io.on("connection", (socket) => {
     const total = bestDice + skill;
 
     io.emit("rollResult", {
+      playerId: socket.id, // 👈 ADICIONA
       player: player.character.name,
       action: action.label,
-      rolls,        // todos os dados
-      bestDice,     // melhor resultado
+      rolls,
+      bestDice,
       skill,
       total
     });
@@ -281,25 +369,15 @@ io.on("connection", (socket) => {
     const npc = Object.values(npcs).find(
       (n) => n.x === x && n.y === y
     );
-
-    if (npc) {
-      socket.emit("dialog", {
-        text: "O boneco te encara... algo parece errado no Natal."
-      });
-    } else {
-      socket.emit("dialog", {
-        text: "A neve está fria... e silenciosa demais."
-      });
-    }
+   
   });
 
   // ==========================
   // 🎮 CONTROLE DO JOGO (MESTRE)
   // ==========================
   socket.on("setMode", (mode) => {
-    const player = players[socket.id];
 
-    if (player?.role !== "mestre") return;
+    if (!masters.has(socket.id)) return;
 
     gameMode = mode;
     io.emit("modeChanged", gameMode);
@@ -309,9 +387,8 @@ io.on("connection", (socket) => {
   // 🎯 EVENTO PRIVADO (MESTRE)
   // ==========================
   socket.on("privateEvent", ({ targetId, data }) => {
-    const player = players[socket.id];
 
-    if (player?.role !== "mestre") return;
+    if (!masters.has(socket.id)) return;
 
     io.to(targetId).emit("privateEvent", data);
   });
@@ -320,9 +397,8 @@ io.on("connection", (socket) => {
   // 🤖 SPAWN DE NPC (MESTRE)
   // ==========================
   socket.on("spawnNPC", ({ x, y }) => {
-    const player = players[socket.id];
 
-    if (player?.role !== "mestre") return;
+    if (!masters.has(socket.id)) return;
 
     const id = "npc_" + Date.now();
 
@@ -336,7 +412,7 @@ io.on("connection", (socket) => {
   // ==========================
   socket.on("moveNPC", ({ id, dir }) => {
     const player = players[socket.id];
-    if (player?.role !== "mestre") return;
+    if (!masters.has(socket.id)) return;
 
     const npc = npcs[id];
     if (!npc) return;

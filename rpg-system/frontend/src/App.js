@@ -6,11 +6,11 @@ function App() {
   const [players, setPlayers] = useState({});
   const [name, setName] = useState("");
   const [npcs, setNpcs] = useState({});
-  const [dialog, setDialog] = useState(null);
   const [user, setUser] = useState(null);
   const [masterText, setMasterText] = useState(null); // texto selecionado pelo mestre
   const [pendingRoll, setPendingRoll] = useState(null);
-  const [rollResults, setRollResults] = useState([]);
+  const [rollResults, setRollResults] = useState({});
+  const [visibleTiles, setVisibleTiles] = useState({});
 
   // recebe players do servidor
   useEffect(() => {
@@ -40,33 +40,21 @@ function App() {
   }, []);
 
   useEffect(() => {
-    socket.on("rollResult", (data) => {
-      setRollResults((prev) => [data, ...prev]);
-    });
+    const handler = (data) => {
+      setRollResults((prev) => ({
+        ...prev,
+        [data.playerId]: data
+      }));
+    };
 
-    return () => socket.off("rollResult");
+    socket.on("rollResult", handler);
+
+    return () => {
+      socket.off("rollResult", handler);
+    };
   }, []);
 
-  // escuta eventos de diálogo do servidor
-  useEffect(() => {
-    socket.on("dialog", (data) => {
-      setDialog(data.text);
-    });
-
-    return () => socket.off("dialog");
-  }, []);
-
-  // login
-  useEffect(() => {
-    socket.on("loginSuccess", (data) => {
-      setUser(data);
-    });
-
-    socket.on("loginError", (msg) => {
-      alert(msg);
-    });
-  }, []);
-  // debug login
+      // debug login
   useEffect(() => {
     socket.on("loginSuccess", (data) => {
       console.log("LOGIN OK", data);
@@ -78,6 +66,15 @@ function App() {
       alert(msg);
     });
   }, []);
+
+  //fog
+  useEffect(() => {
+  socket.on("mapData", (data) => {
+    setVisibleTiles(data);
+  });
+
+  return () => socket.off("mapData");
+}, []);
 
   // envia login
   const handleLogin = () => {
@@ -96,6 +93,13 @@ function App() {
     socket.emit("interact", { x, y });
   };
   
+  const removeRoll = (playerId) => {
+    setRollResults((prev) => {
+      const updated = { ...prev };
+      delete updated[playerId];
+      return updated;
+    });
+  };
 
   // textos narrativos para o mestre usar durante a sessão
   const masterTexts = {
@@ -142,27 +146,57 @@ function App() {
           Spawn NPC
         </button>
 
-        <Map players={players} npcs={npcs} onTileClick={handleTileClick} />
+        <Map 
+          players={players} 
+          npcs={npcs} 
+          visibleTiles={visibleTiles}
+          isMaster={true}
+          onTileClick={handleTileClick} 
+        />
         {/* log de rolagens */}
         <div style={{ marginTop: 20 }}>
-          <h3>Rolagens</h3>
+        <h3>Rolagens</h3>
 
-          {rollResults.map((r, index) => (
-            <div
-              key={index}
-              style={{
-                background: "#111",
-                padding: 10,
-                marginBottom: 5,
-                color: "#fff"
-              }}
-            >
-              <strong>{r.player}</strong> rolou <strong>{r.action}</strong> <br />
-              🎲 Dado: {r.dice} | Atributo: {r.attr} | Perícia: {r.skill} <br />
-              👉 Total: <strong>{r.total}</strong>
-            </div>
-          ))}
-        </div>
+        {Object.entries(rollResults).map(([id, r]) => (
+          <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+            {Object.entries(rollResults).map(([id, r]) => (
+              <div
+                key={id}
+                style={{
+                  background: "#111",
+                  padding: 10,
+                  color: "#fff",
+                  minWidth: 200,
+                  position: "relative"
+                }}
+              >
+                {/* botão fechar */}
+                <button
+                  onClick={() => removeRoll(id)}
+                  style={{
+                    position: "absolute",
+                    top: 5,
+                    right: 5,
+                    background: "red",
+                    color: "#fff",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  X
+                </button>
+
+                <strong>{r.player}</strong> rolou <strong>{r.action}</strong>
+
+                <div>🎲 Dados: {r.rolls.join(", ")}</div>
+                <div>Melhor: <strong>{r.bestDice}</strong></div>
+                <div>Perícia: {r.skill}</div>
+                <div>👉 Total: <strong>{r.total}</strong></div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
 
         {/* painel de rolagens */}
         <div>
@@ -197,7 +231,7 @@ function App() {
           ))}
         </div>
 
-        // painel de textos narrativos do mestre
+        {/* painel de textos narrativos do mestre */}
         <div style={{ marginTop: 20 }}>
           <h3>📖 Textos do Mestre</h3>
 
@@ -236,14 +270,20 @@ function App() {
     <div>
       <h1>Player: {user.character?.name}</h1>
 
-      <Map players={players} npcs={npcs} onTileClick={handleTileClick} />
+      <Map 
+        players={players} 
+        npcs={npcs} 
+        visibleTiles={visibleTiles}
+        isMaster={false}
+        onTileClick={handleTileClick} 
+      />
       {/* log de rolagens */}
       <div style={{ marginTop: 20 }}>
         <h3>Rolagens</h3>
 
-        {rollResults.map((r, index) => (
+        {Object.entries(rollResults).map(([id, r]) => (
           <div
-            key={index}
+            key={id}
             style={{
               background: "#111",
               padding: 10,
@@ -333,21 +373,8 @@ function App() {
           <button onClick={() => move("down")}>↓</button>
           <button onClick={() => move("left")}>←</button>
           <button onClick={() => move("right")}>→</button>
-        </div>
-
-      {/* exibe diálogo na tela */}
-      {dialog && (
-        <div
-          style={{
-            marginTop: 20,
-            padding: 10,
-            background: "#111",
-            color: "#0f0"
-          }}
-        >
-          {dialog}
-        </div>
-      )}
+        </div>    
+      
     </div>
   );
 }
