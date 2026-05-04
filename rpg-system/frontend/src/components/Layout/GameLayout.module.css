@@ -1,0 +1,30 @@
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0a0a0a;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+}
+
+.left {
+  flex: 3;
+  overflow: hidden;
+}
+
+.right {
+  flex: 1;
+  background: #1a1a1a;
+  color: white;
+  padding: 10px;
+  border-left: 1px solid #333;
+}
+
+.bottom {
+  height: 120px;
+  background: #111;
+  border-top: 1px solid #333;
+}

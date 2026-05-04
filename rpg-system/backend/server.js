@@ -216,6 +216,9 @@ let players = {};
 
 // NPCs no mapa
 let npcs = {};
+//estado do lobby
+let readyPlayers = new Set();
+let gameStarted = false;
 
 // modos do jogo:
 // livre = todo mundo anda
@@ -279,6 +282,28 @@ io.on("connection", (socket) => {
     io.emit("updatePlayers", players);
     updateVision(socket.id);
     socket.emit("mapData", getVisibleMap(socket.id));
+  });
+
+  // evento de pronto
+  socket.on("playerReady", () => {
+    readyPlayers.add(socket.id);
+
+    io.emit("lobbyUpdate", {
+      ready: Array.from(readyPlayers),
+      total: Object.keys(players).length
+    });
+  });
+
+  // iniciar jogo (mestre)
+  socket.on("startGame", () => {
+    const player = players[socket.id];
+
+    // só mestre pode iniciar
+    if (player?.role !== "mestre") return;
+
+    gameStarted = true;
+
+    io.emit("gameStarted");
   });
 
   // mestre solicita rolagem para um player específico

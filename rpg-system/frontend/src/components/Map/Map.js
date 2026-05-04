@@ -38,17 +38,19 @@ function Map({players, npcs, visibleTiles, onTileClick, isMaster}) {
     return MAP[mapY]?.[mapX];
   }
 
-  const GRID_SIZE = 10; // já existe no teu código
-
   // 👇 define o quanto o mapa vai "andar"
   const offsetX = me ? me.x - Math.floor(GRID_SIZE / 2) : 0;
   const offsetY = me ? me.y - Math.floor(GRID_SIZE / 2) : 0;
 
   
-  const handleWheel = (e) => {
-    const newZoom = Math.max(0.5, Math.min(2, zoom - e.deltaY * 0.001));
-    setZoom(newZoom);
-  };
+const handleWheel = (e) => {
+  if (!e.ctrlKey) return; 
+
+  e.preventDefault();
+
+  const newZoom = Math.max(0.5, Math.min(2, zoom - e.deltaY * 0.001));
+  setZoom(newZoom);
+};
 
   const onMouseDown = (e) => {
     setDragging(true);
