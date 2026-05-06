@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const MAP = Array.from({ length: 50 }).map((_, y) =>
   Array.from({ length: 50 }).map((_, x) => {
@@ -16,9 +16,9 @@ const dirt = "https://opengameart.org/sites/default/files/dirt.png";
 const playerSprite =
   "https://cdn-icons-png.flaticon.com/512/194/194938.png";
 
-function Map({players, npcs, visibleTiles, onTileClick, isMaster}) {
+function Map({players, npcs, visibleTiles, onTileClick, isMaster, myId}) {
   const playersArray = Object.values(players);
-  const me = Object.values(players)[0];
+  const me = players[myId];
 
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -39,18 +39,18 @@ function Map({players, npcs, visibleTiles, onTileClick, isMaster}) {
   }
 
   // 👇 define o quanto o mapa vai "andar"
-  const offsetX = me ? me.x - Math.floor(GRID_SIZE / 2) : 0;
-  const offsetY = me ? me.y - Math.floor(GRID_SIZE / 2) : 0;
+  const offsetX = me ? me.position.x - Math.floor(GRID_SIZE / 2) : 0;
+  const offsetY = me ? me.position.y - Math.floor(GRID_SIZE / 2) : 0;
 
-  
-const handleWheel = (e) => {
-  if (!e.ctrlKey) return; 
+    
+  const handleWheel = (e) => {
+    if (!e.ctrlKey) return; 
 
-  e.preventDefault();
+    e.preventDefault();
 
-  const newZoom = Math.max(0.5, Math.min(2, zoom - e.deltaY * 0.001));
-  setZoom(newZoom);
-};
+    const newZoom = Math.max(0.5, Math.min(2, zoom - e.deltaY * 0.001));
+    setZoom(newZoom);
+  };
 
   const onMouseDown = (e) => {
     setDragging(true);
@@ -58,7 +58,7 @@ const handleWheel = (e) => {
   };
 
   const onMouseMove = (e) => {
-    if (!dragging) return;
+    if (!dragging || !start) return;
 
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
@@ -71,7 +71,30 @@ const handleWheel = (e) => {
     setStart({ x: e.clientX, y: e.clientY });
   };
 
-  const onMouseUp = () => setDragging(false);
+  const onMouseUp = () => {
+    setDragging(false);
+    setStart(null);
+  };
+
+  const playersMap = useMemo(() => {
+    const map = {};
+
+    playersArray.forEach((p) => {
+      map[`${p.position.x},${p.position.y}`] = p;
+    });
+
+    return map;
+  }, [playersArray]);
+
+  const npcsMap = useMemo(() => {
+    const map = {};
+
+    Object.values(npcs || {}).forEach((n) => {
+      map[`${n.x},${n.y}`] = n;
+    });
+
+    return map;
+  }, [npcs]);
 
   return (
     <div
@@ -100,24 +123,19 @@ const handleWheel = (e) => {
                 const tile = getTile(mapX, mapY);
                 const tileImg = getTileImg(tile);
 
-                const isVisible = isMaster
-                  ? true
-                  : visibleTiles[`${mapX},${mapY}`];
+                const isVisible = isMaster || !!visibleTiles[`${mapX},${mapY}`];
 
-                const playerHere = playersArray.find((p) => {
-                  const px = p.position?.x ?? p.x;
-                  const py = p.position?.y ?? p.y;
-                  return px === mapX && py === mapY;
-                });
-
-                const npcHere = Object.values(npcs || {}).find(
-                  (n) => n.x === mapX && n.y === mapY
-                );
+                const playerHere = playersMap[`${mapX},${mapY}`];
+                const npcHere = npcsMap[`${mapX},${mapY}`];
 
                 return (
                   <div
                     key={x}
-                    onClick={() => onTileClick(mapX, mapY)}
+                    onClick={() => {
+                      if (dragging) return;
+                      onTileClick(mapX, mapY);
+                    }}
+                    onMouseLeave={onMouseUp}
                     style={{
                       width: TILE_SIZE,
                       height: TILE_SIZE,

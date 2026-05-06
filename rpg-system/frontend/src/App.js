@@ -7,102 +7,69 @@ import MasterPanel from "./components/panels/MasterPanel";
 import PlayerPanel from "./components/panels/PlayerPanel";
 
 function App() {
+  const SCREENS = {
+    LOGIN: "login",
+    LOBBY: "lobby",
+    GAME: "game"
+  };
+
   const [players, setPlayers] = useState({});
   const [name, setName] = useState("");
   const [npcs, setNpcs] = useState({});
   const [user, setUser] = useState(null);
-  const [gameState, setGameState] = useState("lobby");
+  const [gameState, setGameState] = useState(SCREENS.LOGIN);
   const [readyPlayers, setReadyPlayers] = useState([]);
   const [pendingRoll, setPendingRoll] = useState(null);
   const [rollResults, setRollResults] = useState({});
   const [visibleTiles, setVisibleTiles] = useState({});
-
-  // recebe players do servidor
-  useEffect(() => {
-    socket.on("updatePlayers", (data) => {
-      setPlayers(data);
-    });
-
-    return () => socket.off("updatePlayers");
-  }, []);
-
-  // recebe NPCs do servidor
-  useEffect(() => {
-    socket.on("updateNPCs", (data) => {
-      setNpcs(data);
-    });
-
-    return () => socket.off("updateNPCs");
-  }, []);
+  const isMaster = user?.role === "mestre";
+  const isPlayer = user?.role === "player";  
 
   useEffect(() => {
-    socket.on("lobbyUpdate", (data) => {
-      setReadyPlayers(data.ready);
+    const handlers = {
+      updatePlayers: (data) => setPlayers(data),
+
+      updateNPCs: (data) => setNpcs(data),
+
+      lobbyUpdate: (data) => setReadyPlayers(data.ready),
+
+      gameStarted: () => setGameState(SCREENS.GAME),
+
+      rollRequested: (data) => {
+        setPendingRoll(data);
+      },
+
+      rollResult: (data) => {
+        setRollResults((prev) => ({
+          ...prev,
+          [data.playerId]: data
+        }));
+      },
+
+      loginSuccess: (data) => {
+        setUser(data);
+        setGameState(SCREENS.LOBBY);
+      },
+
+      loginError: (msg) => {
+        alert(msg);
+      },
+
+      mapData: (data) => setVisibleTiles(data)
+    };
+
+    // registra todos
+    Object.entries(handlers).forEach(([event, fn]) => {
+      socket.on(event, fn);
     });
 
-    socket.on("gameStarted", () => {
-      setGameState("game");
-    });
-    
+    // cleanup
     return () => {
-      socket.off("lobbyUpdate");
-      socket.off("gameStarted");
+      Object.entries(handlers).forEach(([event, fn]) => {
+        socket.off(event, fn);
+      });
     };
   }, []);
-
-  useEffect(() => {
-    socket.on("rollRequested", (data) => {
-      console.log("ROLL RECEBIDO:", data);
-      setPendingRoll(data);
-    });
-
-    return () => socket.off("rollRequested");
-  }, []);
-
-  useEffect(() => {
-    const handler = (data) => {
-      setRollResults((prev) => ({
-        ...prev,
-        [data.playerId]: data
-      }));
-    };
-
-    socket.on("rollResult", handler);
-
-    return () => {
-      socket.off("rollResult", handler);
-    };
-  }, []);
-
-  // debug login
-  useEffect(() => {
-    const success = (data) => {
-      console.log("LOGIN OK", data);
-      setUser(data);
-    };
-
-    const error = (msg) => {
-      console.log("LOGIN ERRO", msg);
-      alert(msg);
-    };
-
-    socket.on("loginSuccess", success);
-    socket.on("loginError", error);
-
-    return () => {
-      socket.off("loginSuccess", success);
-      socket.off("loginError", error);
-    };
-  }, []);
-
-  //fog
-  useEffect(() => {
-  socket.on("mapData", (data) => {
-    setVisibleTiles(data);
-  });
-
-  return () => socket.off("mapData");
-}, []);
 
   // envia login
   const handleLogin = () => {
@@ -111,7 +78,11 @@ function App() {
 
   // movimentação (bloqueia mestre)
   const move = (dir) => {
-    if (user?.role === "mestre") return;
+    if (isMaster) return;
+
+    const validDirs = ["up", "down", "left", "right"];
+
+    if (!validDirs.includes(dir)) return;
 
     socket.emit("move", dir);
   };
@@ -122,7 +93,7 @@ function App() {
   };
 
     // ===== TELA DE LOGIN =====
-  if (!user) {
+  if (gameState === SCREENS.LOGIN) {
     return (
       <div>
         <h2>Login</h2>
@@ -130,14 +101,19 @@ function App() {
           placeholder="Usuário"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
         />
         <button onClick={handleLogin}>Entrar</button>
       </div>
     );
   }
 
-  if (gameState === "lobby") {
-    return <Lobby user={user} readyPlayers={readyPlayers} />;
+  if (gameState === SCREENS.LOBBY) {
+    return <Lobby
+      user={user}
+      players={players}
+      readyPlayers={readyPlayers}
+    />;
   }
   
   return (
@@ -147,13 +123,14 @@ function App() {
         players={players}
         npcs={npcs}
         visibleTiles={visibleTiles}
-        isMaster={user.role === "mestre"}
+        isMaster={isMaster}
         onTileClick={handleTileClick}
+        myId={user.id}
       />
     }
 
     right={
-      user.role === "mestre"
+      isMaster
         ? (
           <MasterPanel
             players={players}
@@ -172,7 +149,7 @@ function App() {
     }
 
     bottom={
-      user.role === "player"
+      isPlayer
         ? (
           <div>
             <button onClick={() => move("up")}>↑</button>

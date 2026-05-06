@@ -1,5 +1,5 @@
 .container {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: #0a0a0a;
@@ -17,6 +17,11 @@
 
 .right {
   flex: 1;
+  min-width: 300px;
+  max-width: 400px;
+
+  overflow-y: auto;
+
   background: #1a1a1a;
   color: white;
   padding: 10px;
@@ -24,7 +29,10 @@
 }
 
 .bottom {
-  height: 120px;
+  min-height: 120px;
+
+  overflow-y: auto;
+
   background: #111;
   border-top: 1px solid #333;
 }

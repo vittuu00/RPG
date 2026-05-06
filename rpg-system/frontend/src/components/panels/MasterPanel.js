@@ -1,5 +1,8 @@
 import { socket } from "../../socket";
 import { useState } from "react";
+import { masterTexts } from "../../data/masterTexts";
+import styles from "./MasterPanel.module.css";
+
 
 function MasterPanel({ players, rollResults, setRollResults }) {
   const [masterText, setMasterText] = useState(null);
@@ -12,23 +15,19 @@ function MasterPanel({ players, rollResults, setRollResults }) {
     });
   };
 
-  const masterTexts = {
-    papaiNoel: [
-      "Ho ho ho... vocês foram bons este ano?",
-      "Eu trouxe presentes... mas não são o que esperavam."
-    ],
-    eventos: [
-      "As luzes piscam violentamente.",
-      "Um sino ecoa pela noite."
-    ],
-    climax: [
-      "O corpo cai... mas o sorriso permanece.",
-      "O Natal acabou. Para sempre."
-    ]
+  const requestRoll = (targetId, actionKey) => {
+    socket.emit("requestRoll", {
+      targetId,
+      actionKey
+    });
   };
 
+  const spawnNPC = () => {
+    socket.emit("spawnNPC", { x: 2, y: 2 });
+  };  
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className={styles.container}>
       
       <h2>Painel do Mestre</h2>
 
@@ -44,8 +43,12 @@ function MasterPanel({ players, rollResults, setRollResults }) {
       <h3>Rolagens</h3>
 
       {Object.entries(rollResults).map(([id, r]) => (
-        <div key={id}>
-          <strong>{r.player}</strong> → {r.total}
+        <div key={id} className={styles.roll}>
+          <strong>{r.player}</strong>
+            🎲 [{r.rolls.join(", ")}]
+            + {r.skill}
+
+            = {r.total}
           <button onClick={() => removeRoll(id)}>X</button>
         </div>
       ))}
@@ -55,28 +58,14 @@ function MasterPanel({ players, rollResults, setRollResults }) {
 
       {Object.entries(players).map(([id, p]) =>
         p.role === "player" ? (
-          <div key={id}>
+          <div key={id} className={styles.playerRow}>
             <span>{p.character?.name}</span>
 
-            <button
-              onClick={() =>
-                socket.emit("requestRoll", {
-                  targetId: id,
-                  actionKey: "investigacao"
-                })
-              }
-            >
+            <button onClick={requestRoll }>
               Investigação
             </button>
 
-            <button
-              onClick={() =>
-                socket.emit("requestRoll", {
-                  targetId: id,
-                  actionKey: "percepcao"
-                })
-              }
-            >
+            <button onClick={requestRoll}>
               Percepção
             </button>
           </div>
@@ -95,7 +84,7 @@ function MasterPanel({ players, rollResults, setRollResults }) {
       </button>
 
       {masterText && (
-        <div style={{ background: "#200", padding: 10 }}>
+        <div className={styles.narration}>
           {masterText}
         </div>
       )}

@@ -1,0 +1,47 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0a0a0a;
+  color: white;
+
+  font-family: Arial, sans-serif;
+}
+
+/* 🔥 BOTÕES GLOBAIS */
+button {
+  background: #222;
+  color: white;
+
+  border: 1px solid #444;
+  border-radius: 6px;
+
+  padding: 8px 12px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #333;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* INPUTS */
+input {
+  background: #111;
+  color: white;
+
+  border: 1px solid #333;
+  border-radius: 6px;
+
+  padding: 8px;
+}

@@ -1,4 +1,5 @@
 import { socket } from "../../socket";
+import styles from "./PlayerPanel.module.css";
 
 function PlayerPanel({
   user,
@@ -6,23 +7,40 @@ function PlayerPanel({
   pendingRoll,
   setPendingRoll
 }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
-      <h2>{user.character?.name}</h2>
+  const character = user.character;
+
+  const attributes = [
+    ["FOR", character.attributes?.strength],
+    ["AGI", character.attributes?.agility],
+    ["INT", character.attributes?.intellect],
+    ["VIG", character.attributes?.vigor],
+    ["PRE", character.attributes?.presence]
+  ];
+
+  const stats = [
+    ["HP", character.stats?.hp],
+    ["SAN", character.stats?.sanity],
+    ["EN", character.stats?.energy]
+  ];
+
+  return (
+    <div className={styles.container}>
+
+      <h2>{character?.name}</h2>
 
       {/* 🎲 ROLAGENS */}
       <h3>Rolagens</h3>
 
       {Object.entries(rollResults).map(([id, r]) => (
-        <div key={id}>
+        <div key={id} className={styles.roll}>
           <strong>{r.player}</strong>: {r.total}
         </div>
       ))}
 
       {/* 🎯 PEDIDO DE ROLAGEM */}
       {pendingRoll && (
-        <div style={{ background: "#111", padding: 10 }}>
+        <div className={styles.pendingRoll}>
           <p>Rolagem: {pendingRoll.action.label}</p>
 
           <button
@@ -39,25 +57,23 @@ function PlayerPanel({
       )}
 
       {/* 📊 FICHA */}
-      {user.character && (
-        <div style={{
-          background: "#222",
-          padding: 10,
-          borderRadius: 10
-        }}>
+      {character && (
+        <div className={styles.sheet}>
           <h3>Atributos</h3>
 
-          <p>FOR: {user.character.attributes?.strength}</p>
-          <p>AGI: {user.character.attributes?.agility}</p>
-          <p>INT: {user.character.attributes?.intellect}</p>
-          <p>VIG: {user.character.attributes?.vigor}</p>
-          <p>PRE: {user.character.attributes?.presence}</p>
+          {attributes.map(([label, value]) => (
+            <p key={label}>
+              {label}: {value}
+            </p>
+          ))}
 
           <h3>Status</h3>
 
-          <p>HP: {user.character.stats?.hp}</p>
-          <p>SAN: {user.character.stats?.sanity}</p>
-          <p>EN: {user.character.stats?.energy}</p>
+          {stats.map(([label, value]) => (
+            <p key={label}>
+              {label}: {value}
+            </p>
+          ))}
         </div>
       )}
 
