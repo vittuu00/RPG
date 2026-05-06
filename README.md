@@ -240,7 +240,7 @@ Em desenvolvimento ativo
 
 ## Autor
 
-Desenvolvido por Vitor Trapp
+Desenvolvido por Vitor Hugo Piske Trapp
 
 ```
  /\_/\  
