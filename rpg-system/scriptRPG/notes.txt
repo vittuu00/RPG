@@ -1,0 +1,361 @@
+a estrutura atual:
+rpg-system{
+    backend{
+        server.js
+    }
+    frontend{
+        src{
+            app.js //App = ponte entre jogador ↔ servidor ↔ interface
+            index.js
+            components{
+                map.js
+            }
+        }
+    }
+}
+
+
+codigos principais:
+
+App.js:
+import { useEffect, useState } from "react";
+import { socket } from "./socket";
+import Map from "./components/Map";
+
+function App() {
+  const [players, setPlayers] = useState({});
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("player");
+  const [npcs, setNpcs] = useState({});
+
+  useEffect(() => {
+    socket.on("updatePlayers", (data) => {
+      setPlayers(data);
+    });
+
+    return () => {
+      socket.off("updatePlayers");
+    };
+  }, []);
+  
+  // estados
+  const setMode = (mode) => {
+    socket.emit("setMode", mode);
+  };
+
+  const handleLogin = () => {
+    socket.emit("login", { username: name, password: "123" });
+  };
+
+  useEffect(() => {
+    socket.on("loginSuccess", (data) => {
+      setUser(data);
+    });
+
+    socket.on("loginError", (msg) => {
+      alert(msg);
+    });
+  }, []);
+
+  const move = (dir) => {
+    socket.emit("move", dir);
+  };
+
+  const spawnNPC = () => {
+    socket.emit("spawnNPC", { x: 2, y: 2 });
+  };
+
+  const moveNPC = (dir) => {
+    const npcId = Object.keys(npcs)[0];
+    if (!npcId) return;
+
+    socket.emit("moveNPC", { id: npcId, dir });
+  };
+  const [user, setUser] = useState(null);
+
+  {role === "mestre" && (
+    <div style={{ marginTop: 20 }}>
+      <button onClick={() => setMode("livre")}>Modo Livre</button>
+      <button onClick={() => setMode("turno")}>Modo Turno</button>
+      <button onClick={() => setMode("stop")}>STOP</button>
+    </div>
+  )}
+  {role === "mestre" && (
+    <div>
+      <button onClick={spawnNPC}>Spawn NPC</button>
+
+      <div>
+        <button onClick={() => moveNPC("up")}>↑ NPC</button>
+        <button onClick={() => moveNPC("down")}>↓ NPC</button>
+        <button onClick={() => moveNPC("left")}>← NPC</button>
+        <button onClick={() => moveNPC("right")}>→ NPC</button>
+      </div>
+    </div>
+  )}  
+
+  useEffect(() => {
+    socket.on("updateNPCs", (data) => {
+      setNpcs(data);
+    });
+
+    return () => {
+      socket.off("updateNPCs");
+    };
+  }, []);    
+
+  if (!user) {
+    return (
+      <div>
+        <h2>Login</h2>
+        <input
+          placeholder="Usuário"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <button onClick={handleLogin}>Entrar</button>
+      </div>
+    );
+  }
+
+  if (user.role === "mestre") {
+    return (
+      <div>
+        <h1>PAINEL DO MESTRE</h1>
+
+        <button onClick={() => socket.emit("setMode", "stop")}>
+          STOP
+        </button>
+
+        <button onClick={() => socket.emit("spawnNPC", { x: 2, y: 2 })}>
+          Spawn NPC
+        </button>
+
+        <Map players={players} npcs={npcs} />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1>Player: {user.character}</h1>
+
+      <Map players={players} npcs={npcs} />
+
+      <div>
+        <button onClick={() => move("up")}>↑</button>
+        <button onClick={() => move("down")}>↓</button>
+        <button onClick={() => move("left")}>←</button>
+        <button onClick={() => move("right")}>→</button>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+server.js:
+
+let npcs = {};
+
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
+
+const app = express();
+app.use(cors());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
+
+const users = {
+  mestre: { password: "123", role: "mestre" },
+  player1: { password: "123", role: "player", character: "detetive" },
+  player2: { password: "123", role: "player", character: "medico" }
+};
+
+// Estado simples (depois você melhora)
+let players = {};
+let gameMode = "livre"; // livre | turno | stop
+
+io.on("connection", (socket) => {
+  
+  socket.on("login", ({ username, password }) => {
+    const user = users[username];
+
+    if (!user || user.password !== password) {
+      socket.emit("loginError", "Login inválido");
+      return;
+    }
+
+    players[socket.id] = {
+      id: socket.id,
+      username,
+      role: user.role,
+      character: user.character || null,
+      x: 5,
+      y: 5
+    };
+
+    socket.emit("loginSuccess", players[socket.id]);
+    io.emit("updatePlayers", players);
+  });
+
+  // MOVIMENTO
+  socket.on("move", (dir) => {
+    const player = players[socket.id];
+    if (!player || gameMode === "stop") return;
+
+    if (dir === "up") player.y--;
+    if (dir === "down") player.y++;
+    if (dir === "left") player.x--;
+    if (dir === "right") player.x++;
+
+    io.emit("updatePlayers", players);
+  });
+
+  // MUDAR MODO (só mestre)
+  socket.on("setMode", (mode) => {
+    const player = players[socket.id];
+    if (player?.role !== "mestre") return;
+
+    gameMode = mode;
+    io.emit("modeChanged", gameMode);
+  });
+
+  // 🎯 EVENTO PRIVADO (ESSENCIAL)
+  socket.on("privateEvent", ({ targetId, data }) => {
+    const player = players[socket.id];
+    if (player?.role !== "mestre") return;
+
+    io.to(targetId).emit("privateEvent", data);
+  });
+
+  socket.on("disconnect", () => {
+    delete players[socket.id];
+    io.emit("updatePlayers", players);
+  });
+
+  socket.on("spawnNPC", ({ x, y }) => {
+    const player = players[socket.id];
+    if (player?.role !== "mestre") return;
+
+    const id = "npc_" + Date.now();
+
+    npcs[id] = {
+      id,
+      x,
+      y
+    };
+
+    io.emit("updateNPCs", npcs);
+  });
+  
+  socket.on("moveNPC", ({ id, dir }) => {
+    const player = players[socket.id];
+    if (player?.role !== "mestre") return;
+
+    const npc = npcs[id];
+    if (!npc) return;
+
+    if (dir === "up") npc.y--;
+    if (dir === "down") npc.y++;
+    if (dir === "left") npc.x--;
+    if (dir === "right") npc.x++;
+
+    io.emit("updateNPCs", npcs);
+  });  
+});
+
+
+
+server.listen(3000, () => {
+  console.log("Servidor rodando na porta 3000");
+});
+
+Map.js:
+
+const TILE_SIZE = 48;
+const GRID_SIZE = 10;
+
+const grass =
+  "https://opengameart.org/sites/default/files/grass_0.png";
+
+const playerSprite =
+  "https://cdn-icons-png.flaticon.com/512/194/194938.png";
+
+function Map({ players, npcs }) {
+  return (
+    <div>
+      {Array.from({ length: GRID_SIZE }).map((_, y) => (
+        <div key={y} style={{ display: "flex" }}>
+          {Array.from({ length: GRID_SIZE }).map((_, x) => {
+            const playerHere = Object.values(players).find(
+              (p) => p.x === x && p.y === y
+            );
+            const npcHere = Object.values(npcs || {}).find(
+              (n) => n.x === x && n.y === y
+            );
+
+            return (
+              <div
+                key={x}
+                style={{
+                  width: TILE_SIZE,
+                  height: TILE_SIZE,
+                  position: "relative"
+                }}
+              >
+                {/* CHÃO */}
+                <img
+                  src={grass}
+                  alt="tile"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    imageRendering: "pixelated"
+                  }}
+                />
+
+                {/* PLAYER */}
+                {playerHere && (
+                  <img
+                    src={playerSprite}
+                    alt="player"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      imageRendering: "pixelated"
+                    }}
+                  />
+                )}
+                {/* NPC */}
+                {npcHere && (
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png"
+                    alt="npc"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      imageRendering: "pixelated"
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default Map;
