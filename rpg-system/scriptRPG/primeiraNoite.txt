@@ -1,0 +1,275 @@
+PRIMEIRA NOITE
+1. Chegada ao vale
+
+Descrição geral:
+
+chuva leve
+serração
+estrada estreita
+sensação de isolamento
+cidade parece vazia cedo demais
+
+Objetivo narrativo:
+
+criar desconforto
+mostrar que o lugar parece real
+apresentar pequenos detalhes estranhos
+2. O posto
+
+Objetivo:
+
+reunir os personagens
+gerar primeiras impressões
+introduzir NPCs manipulando a situação
+
+Elementos:
+
+frentista amigável demais
+placa do último posto
+clima estranho
+rádio com interferência
+pequenos julgamentos entre players
+3. O desvio
+
+Objetivo:
+
+tirar controle dos players
+fazer parecer coincidência
+iniciar sensação de armadilha
+
+Elementos:
+
+policial
+ponte interditada
+insistência no novo caminho
+estrada piorando
+4. A subida
+
+Objetivo:
+
+tensão crescente
+sensação de isolamento total
+
+Elementos:
+
+pinheiros
+curvas
+serração intensa
+GPS falhando
+sensação de déjà vu
+vultos
+animais estranhos
+5. O hospital
+
+Objetivo:
+
+horror psicológico inicial
+desconforto sem combate
+
+Elementos:
+
+prédio aparentemente abandonado
+luzes funcionando
+café quente
+sangue limpo
+registros médicos
+sensação de presença
+6. O evento
+
+Objetivo:
+
+quebra definitiva da normalidade
+
+Elementos:
+
+alarme
+queda de energia
+silêncio absoluto
+pulso
+dor
+sensação individual diferente
+
+Consequência:
+
+mutação genética inicial
+sintomas leves
+trauma
+7. O pós-evento
+
+Objetivo:
+
+percepção de que algo mudou
+sensação de não retorno
+
+Elementos:
+
+estrada errada
+eletrônicos falhando
+NPC ferido
+primeiro efeito dos genes
+sensação de perseguição
+
+ISSO é o documento mais importante que você pode fazer agora.
+
+Porque depois você consegue derivar:
+
+diálogos
+sessões
+mapas
+eventos
+sistema
+roteiro
+cenas
+soundtrack
+interface
+
+Tudo.
+
+Outra dica MUITO importante:
+
+Escreve por “objetivo emocional”.
+
+Não:
+
+“o player entra na sala.”
+
+Mas:
+
+“o player deve sentir que está sendo observado.”
+
+Isso ajuda MUITO no horror.
+
+1. PRIMEIRA NOITE — ESTRUTURA NARRATIVA
+2. Ambientação Geral
+A história acontece em uma região rural do sul do Brasil, localizada em um vale cercado por mata, araucarias/pinheiros, morros e estradas estreitas com postes de luz amarela. O lugar possui clima frio, úmido e silencioso, principalmente durante a noite.
+A região é composta por:
+•	uma pequena cidade principal;
+•	bairros afastados;
+•	estradas rurais;
+•	áreas de mata fechada;
+•	um rio que corta parte do vale;
+•	uma pedreira abandonada;
+•	túneis antigos;
+•	uma fábrica desativada;
+•	comunidades agrícolas isoladas.
+O local deve parecer real antes de parecer estranho.
+A sensação inicial não é de terror explícito, mas de desconforto crescente.
+Chuva leve, neblina constante, postes espaçados e sinal ruim ajudam a criar a sensação de isolamento. Depois das 20h, a região parece “morta”.
+________________________________________
+3. Personagens e Motivações
+4. Leon Voss
+Leon está indo para o vale para investigar desaparecimentos e possíveis acidentes ambientais reportados na região.
+A investigação possui envolvimento indireto de autoridades locais, embora Leon ainda não saiba disso.
+Ele acredita estar lidando com corrupção, negligência ou algum crime regional.
+________________________________________
+5. Alisson
+Alisson recebeu arquivos anônimos pela internet.
+Inicialmente acredita ser apenas uma tentativa de trollagem ou vazamento falso, mas percebe que os metadados apontam para a região do vale.
+Os arquivos possuem informações fragmentadas, imagens corrompidas, registros médicos e referências a pesquisas biológicas.
+A curiosidade supera o bom senso.
+________________________________________
+6. Antonella Ferraz
+Antonella possui formação na área biológica e viaja até o vale após relatos de um possível acidente biológico envolvendo moradores locais e animais da região.
+Ela odeia imediatamente o ambiente rural e sente desconforto constante por estar longe de centros urbanos e sem controle da situação.
+Sua presença ali deveria ser temporária.
+________________________________________
+7. O Posto de Gasolina
+Os três personagens chegam separadamente a um posto de gasolina isolado na estrada durante a noite.
+Uma placa informa:
+“Próximo posto a muitos quilômetros.”
+Mais tarde, será descoberto que essa informação era falsa.
+O posto funciona como o último local aparentemente seguro antes da entrada no vale profundo.
+O frentista conversa demais, parece amigável e tenta manter os três ali pelo maior tempo possível sem parecer suspeito.
+Ele faz perguntas pessoais, oferece café, comenta sobre a estrada e insiste para que não sigam viagem imediatamente devido ao clima e às condições da região.
+Os personagens não criam amizade entre si.
+O primeiro contato é marcado por:
+•	antipatia;
+•	julgamentos rápidos;
+•	desconfiança;
+•	pequenas provocações;
+•	desconforto social.
+O rádio do posto sofre interferências ocasionais.
+Em alguns momentos:
+•	as luzes piscam;
+•	há sensação de déjà vu;
+•	sons parecem abafados;
+•	um vulto pode ser visto próximo da mata.
+O frentista está esperando o momento exato em que os três estarão juntos novamente na estrada.
+Após isso, ele informa discretamente um policial da região.
+________________________________________
+8. O Desvio
+Mais à frente, uma ponte está interditada.
+O policial local explica que houve risco estrutural e orienta os três a seguirem por uma estrada alternativa.
+Inicialmente educado, ele se torna irritado caso insistam demais ou tentem retornar.
+A estrada alternativa é o verdadeiro objetivo.
+Ela sobe em direção às áreas mais isoladas do vale.
+A partir desse ponto:
+•	o sinal desaparece;
+•	o GPS falha;
+•	a neblina piora;
+•	a sensação de isolamento aumenta.
+A subida ocorre por uma estrada de chão cercada por pinheiros e mata fechada.
+Curvas em S dificultam visão e orientação.
+O lugar parece distante do restante do mundo.
+________________________________________
+9. O Hospital
+A estrada termina em um prédio semelhante a um hospital abandonado.
+A construção fica isolada no alto da região.
+Apesar da aparência antiga e parcialmente deteriorada, existem luzes funcionando no interior.
+Os personagens percebem que as informações dadas pelo policial não faziam sentido.
+A estrada termina ali.
+Eles entram no prédio buscando orientação, telefone ou qualquer explicação.
+O ambiente parece abandonado, mas detalhes indicam atividade recente:
+•	café ainda quente;
+•	televisões ligadas sem som;
+•	documentos espalhados;
+•	prontuários riscados;
+•	sangue limpo de forma excessivamente cuidadosa;
+•	marcas nas paredes;
+•	equipamentos ainda funcionando;
+•	portas trancadas eletronicamente.
+A sensação não é de ataque imediato.
+É de que algo aconteceu há poucos minutos.
+________________________________________
+10. O Evento
+O laboratório escondido sob o hospital estava realizando um experimento biológico envolvendo manipulação genética, frequências eletromagnéticas e transmissão celular.
+O experimento não foi feito para os protagonistas.
+A cientista responsável não estava esperando pela presença deles naquele momento.
+Algo ocorre de forma inesperada durante o teste.
+Alarmes começam a tocar.
+A energia oscila.
+Portas travam.
+Então acontece um silêncio absoluto por alguns segundos.
+Nenhum som.
+Nenhuma interferência.
+Nada.
+Logo depois, um pulso atravessa toda a estrutura.
+Não é uma explosão comum.
+É uma onda invisível de pressão, luz e frequência.
+Os personagens sentem como se o próprio corpo estivesse reagindo ao sinal.
+Cada um experimenta sensações diferentes:
+•	Leon sente adrenalina extrema e impulso de controle;
+•	Alisson sente pensamentos fragmentados e emoções externas;
+•	Antonella sente dor física e alterações corporais ao redor.
+Luzes estouram.
+Objetos vibram.
+Narizes sangram.
+Animais enlouquecem do lado de fora.
+O evento termina tão rápido quanto começou.
+Aparentemente, tudo volta ao normal.
+Mas algo já mudou.
+________________________________________
+11. Pós-Evento
+Os personagens tentam sair da região.
+Nada parece funcionar corretamente.
+Celulares falham.
+GPS enlouquece.
+A estrada parece diferente.
+O ambiente agora transmite sensação constante de ameaça.
+Pequenos efeitos começam a surgir:
+•	desconforto físico;
+•	alterações emocionais;
+•	percepção anormal;
+•	reações estranhas em outras pessoas.
+A primeira noite termina com a percepção de que não existe mais volta.
+
