@@ -1,6 +1,6 @@
 # RPG System
 
-Sistema web para RPG de mesa com foco em suporte ao mestre, interação em mapa e ficha de personagem, inspirado em campanhas de terror psicológico e sobrevivência.
+Sistema web para RPG de mesa com foco em suporte ao mestre, interação em mapa e ficha de personagem, inspirado em campanhas de terror psicológico e sobrevivência como em Ordem Paranormal.
 
 ---
 
