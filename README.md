@@ -1,34 +1,119 @@
-# RPG System 
+# RPG System
 
-Sistema web para RPG de mesa com foco em suporte ao mestre, interação em mapa e ficha de personagem, inspirado em campanhas como Natal Macabro.
-
-##  Premissa
-
-“Um grupo de pessoas fica preso após um evento inesperado e passa a ser caçado por um assassino(?) 
- onde sobreviver não depende de poder, mas de ser mais rápido (ou mais cruel) que os outros.”
+Sistema web para RPG de mesa com foco em suporte ao mestre, interação em mapa e ficha de personagem, inspirado em campanhas de terror psicológico e sobrevivência como em Ordem Paranormal.
 
 ---
 
-## Visão Geral
+# Premissa
 
-Este projeto é um sistema multiplayer em tempo real usando WebSockets, onde:
+“Um grupo de pessoas fica preso após um evento inexplicável e passa a ser caçado enquanto tenta sobreviver.
 
-* Jogadores se movimentam em um mapa grid
-* O mestre controla o ambiente (NPCs, eventos, narrativa)
-* Cada jogador possui uma ficha com atributos, status e perícias
-* A interpretação acontece externamente (ex: Discord)
+O medo não pode ser resolvido com poder.
+Fugir é melhor que lutar.
+Se esconder é melhor que enfrentar.”
+
+Após uma luz intensa e um possível pulso eletromagnético, várias pessoas desconhecidas acabam se encontrando em uma estrada isolada.
+
+Ninguém confia em ninguém.
+
+Ao mesmo tempo em que tentam entender o que aconteceu, percebem que todos sentiram a mesma coisa… e que algo dentro deles mudou.
 
 ---
 
-## Tecnologias Utilizadas
+# Conceito Narrativo
 
-### Frontend
+O sistema possui foco em:
+
+* Terror psicológico
+* Sobrevivência
+* Tensão entre jogadores
+* Escolhas morais
+* Narrativa emergente
+* Poderes com consequências
+
+O objetivo não é derrotar monstros.
+
+É sobreviver.
+
+Mesmo que alguém precise ficar para trás.
+
+---
+
+# Principais Ameaças
+
+## 👹 A criatura / assassino
+
+Uma presença constante que força movimento, medo e desespero.
+
+---
+
+## 👩‍🔬 Cientista / governo
+
+Uma organização ligada a experimentos ilegais envolvendo humanos.
+
+Os personagens não foram afetados por acidente.
+
+Eles foram escolhidos.
+
+---
+
+## 🧠 Os próprios poderes
+
+As habilidades ajudam os personagens…
+
+Mas também os destroem aos poucos.
+
+Quanto mais usam:
+* mais instáveis ficam
+* mais perdem sanidade
+* mais perto chegam de “virar algo pior”
+
+---
+
+# Sistema de Sanidade
+
+Uso de poderes afeta diretamente a SAN (sanidade).
+
+Consequências:
+* paranoia
+* perda de controle
+* distorções da realidade
+* comportamento agressivo
+* conflitos internos
+
+O sistema incentiva:
+* egoísmo
+* desconfiança
+* decisões difíceis
+* tensão entre players
+
+---
+
+# Personagens
+
+Os personagens da campanha possuem segredos próprios, habilidades únicas e conflitos internos.
+
+As informações completas dos personagens não ficam públicas no sistema.
+
+Cada jogador conhece apenas:
+* sua própria ficha
+* parte da personalidade dos outros personagens
+* o que foi revelado durante a narrativa
+
+---
+
+# Tecnologias Utilizadas
+
+## Frontend
 
 * React
 * JavaScript
-* CSS
+* CSS Modules
+* Socket.IO Client
 
-### Backend
+---
+
+## Backend
 
 * Node.js
 * Express
@@ -36,9 +121,8 @@ Este projeto é um sistema multiplayer em tempo real usando WebSockets, onde:
 
 ---
 
-## Estrutura do Projeto
+# Estrutura Atual do Projeto
 
-```
 rpg-system/
 │
 ├── backend/
@@ -48,201 +132,259 @@ rpg-system/
 │   └── src/
 │       ├── App.js
 │       ├── index.js
+│       ├── socket.js
+│       │
 │       └── components/
-│           └── Map.js
-```
+│           │
+│           ├── Map/
+│           │   ├── Map.js
+│           │   └── Map.module.css
+│           │
+│           ├── Lobby/
+│           │   ├── Lobby.js
+│           │   └── Lobby.module.css
+│           │
+│           ├── Layout/
+│           │   ├── GameLayout.js
+│           │   └── GameLayout.module.css
+│           │
+│           └── panels/
+│               ├── MasterPanel.js
+│               ├── MasterPanel.module.css
+│               ├── PlayerPanel.js
+│               └── PlayerPanel.module.css
 
 ---
 
-## Funcionalidades Atuais
+# Funcionalidades Atuais
 
-### Sistema de Login
+## Sistema de Login
 
-* Login simples baseado em usuários definidos no backend
-* Dois tipos:
-
+* Login via backend
+* Controle de permissões
+* Separação entre:
   * mestre
-  * player
+  * players
 
 ---
 
-### Mapa em Grid
+## Lobby
 
-* Mapa 10x10
-* Renderização de:
+* Entrada inicial dos jogadores
+* Preparação antes da sessão
+* Base para sistema de sala multiplayer
 
-  * Jogadores
-  * NPCs
+---
+
+## Sistema Multiplayer em Tempo Real
+
+Utilizando WebSockets com Socket.IO:
+* movimentação sincronizada
+* atualização em tempo real
+* eventos privados
+* comunicação mestre ↔ jogadores
+
+---
+
+## Mapa Grid
+
+* Grid visual
 * Movimento em tempo real
+* Renderização de:
+  * jogadores
+  * NPCs
+* Sistema de zoom
+* Base pronta para:
+  * colisão
+  * visão
+  * eventos
+  * interações
 
 ---
 
-### Movimento
+## Sistema de Movimento
 
-* Players se movem via botões (↑ ↓ ← →)
-* Mestre não se move
+Players:
+* movimentação por direção
+* sincronização em tempo real
 
----
-
-### NPCs
-
-* Mestre pode:
-
-  * Spawnar NPC
-  * Mover NPCs manualmente
+Mestre:
+* controle livre do ambiente
 
 ---
 
-### Interação
+## NPCs
 
-* Clique no mapa envia evento ao servidor
-* Base pronta para eventos e narrativa
-
----
-
-### Painel do Mestre
-
-* Controle de:
-
-  * Spawn de NPC
-  * Estado do jogo (stop, etc)
-* Sistema inicial de textos narrativos
+O mestre pode:
+* spawnar NPCs
+* mover NPCs manualmente
+* controlar eventos envolvendo NPCs
 
 ---
 
-### Ficha do Personagem
+## Painel do Mestre
 
-Cada player possui uma ficha com:
-
-#### Atributos
-
-* FOR (Força)
-* AGI (Agilidade)
-* INT (Intelecto)
-* VIG (Vigor)
-* PRE (Presença)
-
-#### Status
-
-* HP (vida)
-* SAN (sanidade)
-* EN (energia)
-
-#### Perícias
-
-* Investigação
-* Percepção
-* Reflexos
-* Luta
-* Vontade
-
-#### Outros
-
-* Inventário
-* Descrição
+Controle atual:
+* modos do jogo
+* STOP global
+* spawn de NPC
+* movimentação de NPC
+* eventos privados
+* narrativa
 
 ---
 
-## Estrutura de Dados
+## Painel do Jogador
 
-### Users (base)
+Cada jogador possui:
+* informações do personagem
+* movimentação
+* integração futura com:
+  * inventário
+  * status
+  * sanidade
+  * poderes
 
-Responsável por login e definição de personagem.
+---
 
-### Players (tempo real)
+# Estrutura de Dados
 
-Estado atual no jogo:
+## Users
 
+Responsável por:
+* login
+* permissões
+* personagem associado
+
+---
+
+## Players
+
+Estado em tempo real:
 * posição
 * socket
+* status
 * dados dinâmicos
 
 ---
 
-## Conceitos Importantes
+## NPCs
 
-* role define permissões (mestre ou player)
-* character define a ficha do personagem
-* position pertence ao player (não ao character)
-
----
-
-## Como Rodar o Projeto
-
-### Backend
-
-```bash
-cd backend
-npm install
-node server.js
-```
-
-Servidor roda em:
-
-```
-http://localhost:3000
-```
+Entidades controladas pelo mestre:
+* posição
+* comportamento
+* eventos
 
 ---
 
-### Frontend
+# Conceitos Importantes
 
-```bash
-cd frontend
-npm install
-npm start
-```
+## role
 
-Aplicação roda em:
-
-```
-http://localhost:3001
-```
+Define permissões:
+* mestre
+* player
 
 ---
 
-## Usuários de Teste
+## character
+
+Define:
+* ficha
+* atributos
+* habilidades
+* identidade narrativa
+
+---
+
+## player
+
+Representa:
+* conexão
+* estado em tempo real
+* posição no mapa
+
+---
+
+# Objetivo do Projeto
+
+Criar uma ferramenta leve e imersiva para RPG online focada em:
+
+* terror psicológico
+* narrativa dinâmica
+* suporte ao mestre
+* tensão entre jogadores
+* sobrevivência
+* multiplayer em tempo real
+
+---
+
+# Próximos Passos
+
+## Sistema de Dados
+
+* rolagem de dados
+* testes automáticos
+* vantagem/desvantagem
+
+---
+
+## Sistema de Sanidade
+
+* efeitos mentais
+* perda de controle
+* eventos psicológicos
+* alterações narrativas
+
+---
+
+## Inventário
+
+* itens utilizáveis
+* peso
+* loot
+* inspeção
+
+---
+
+## Sistema de Eventos
+
+* cenas do mestre
+* triggers no mapa
+* eventos privados
+* sustos e perseguições
+
+---
+
+## Interface
+
+* visual mais imersivo
+* HUD estilizada
+* animações
+* efeitos de tensão
+
+---
+
+## Gameplay
+
+* sistema de visão
+* iluminação
+* colisão
+* perseguições
+* IA básica para criatura
+
+---
+
+# Status
+
+🚧 Em desenvolvimento ativo (bugs alert)
+
+Projeto evoluindo junto da campanha e da construção narrativa.
 
 ```
-mestre   | 123
-detetive | 123
-medico   | 123
-```
-
----
-
-## Próximos Passos
-
-* Sistema de rolagem de dados
-* Melhorias na interface
-* Sistema de sanidade avançado
-* Inventário funcional
-* Eventos do mestre em tempo real
-* Sistema de cenas e narrativa
-
----
-
-## Objetivo do Projeto
-
-Ser uma ferramenta leve para RPG de mesa online, focada em:
-
-* Liberdade narrativa
-* Suporte ao mestre
-* Experiência imersiva
-
----
-
-## Status
-
-Em desenvolvimento ativo
-
----
-
-## Autor
-
+Autor
 Desenvolvido por Vitor Hugo Piske Trapp
 
-```
  /\_/\  
 ( o.o ) 
  > ^ <
